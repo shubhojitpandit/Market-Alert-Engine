@@ -1,0 +1,5 @@
+pytest
+MetaTrader5
+keyring>=25.0
+protobuf>=5.26
+websockets>=12.0

@@ -1,0 +1,23 @@
+# Market Alert Engine Manual Testing Log
+
+These records summarize previously performed manual QA. Automated pytest results are reported separately and do not replace manual confirmation of Windows audio or visible toast behavior.
+
+| Test ID | Step | Test type | Scenario | Expected result | Actual result | Status | Notes/defects |
+|---|---|---|---|---|---|---|---|
+| TR-001 | 3A Simulated Feed | Manual component | Run multi-asset simulated feed and observe EURUSD, BTCUSD, and AAPL. | Price updates are generated for each instrument. | Updates for EURUSD, BTCUSD, and AAPL were observed and generated successfully. | PASS | — |
+| TR-002 | 3B Alert Manager | Manual component | Register alerts, inspect IDs and active list, cancel one, mark another triggered. | IDs increment; active view and lifecycle states update correctly. | Registration, sequential IDs, active listing, cancellation, and triggered status were verified. | PASS | — |
+| TR-003 | 3C Alert Engine | Manual integration | Exercise ABOVE, BELOW, CROSS_ABOVE, CROSS_BELOW, multiple alerts, instrument isolation, cancellation, and repeat updates. | Trigger boundaries and one-shot behavior are correct; cancelled and triggered alerts do not retrigger. | All four conditions, multiple alerts, isolation, cancellation, and duplicate-trigger prevention were verified. | PASS | — |
+| TR-004 | 3D Notification Queue & Handler | Manual integration | Process single and multiple triggered alerts through sound and Windows toast channels. | Sound and toast are delivered; processing is FIFO and channel failures do not stop the queue. | Initial run exposed a toast that did not appear despite a successful command and overlapping asynchronous sounds. After using the registered Windows toast identity and synchronous `PlaySound`, retesting confirmed visible toast, audible sound, FIFO delivery, non-overlapping sounds, no notifications for cancelled/already-triggered alerts, and continued processing after channel failures. | PASS | Initial defects retained here as QA evidence; both were fixed and retested. |
+| TR-005 | 3E Alert History | Manual component/integration | Record triggers and inspect ordering, values, timestamps, recent and empty views. | Trigger order, actual price and UTC timestamp are preserved; cancelled/duplicate events are excluded. | Trigger records, order, actual triggering price, UTC timestamps, recent and empty retrieval, cancellation exclusion, and duplicate prevention were verified. | PASS | — |
+| TR-006 | 4A Integrated Simulated Runtime | Manual end-to-end | Run seeded feed through engine, queue, handler, and history. | Multiple instruments and alerts flow end-to-end; queue drains without duplicate history or notifications. | Multiple alerts triggered from one update, multiple instruments were processed, notifications were processed, history retained triggers, queue ended empty, duplicates were absent, and cancelled alert remained cancelled. | PASS | — |
+| TR-007 | 4B Interactive CLI | Manual end-to-end | Create/list/cancel alerts, inspect history, run simulation, and exercise invalid input. | CLI remains usable; trigger, history, sound, toast, cancellation, and validation work. | Alert creation, active view, cancellation, history, simulation start, trigger/no-trigger behavior, Windows toast and sound, history recording, invalid inputs, and return to menu were verified without a crash. | PASS | — |
+| TR-008 | Upstox live V3 feed | Manual end-to-end | Connect the saved Upstox connection for `NSE_INDEX\|Nifty 50` from **Manage Upstox Connections**. | WinHTTP/Schannel authorization succeeds; existing `websockets` client connects; LTPC subscription delivers a last-traded price through `PriceUpdate`. | Authorization succeeded, the WebSocket connected, subscription succeeded, and an LTP for `NSE_INDEX\|Nifty 50` was printed by the existing live-update path. Disconnect and CLI exit completed cleanly. | PASS | Python urllib/OpenSSL authorize remains rejected by the provider edge; production authorize uses WinHTTP/Schannel. No credential was logged. |
+
+## Step 3D initial failure and retest record
+
+The initial Step 3D QA result was **FAIL** for two observed defects:
+
+1. Toast command returned successfully, but no visible Windows toast appeared.
+2. Asynchronous/concurrent sound playback caused overlapping alert sounds.
+
+Fixes used the registered Windows toast identity and synchronous Windows `PlaySound`. Retesting then confirmed a visible toast and audible sound, FIFO notifications, serialized sounds, cancellation/duplicate behavior, and failure isolation. Final Step 3D status: **PASS**.
